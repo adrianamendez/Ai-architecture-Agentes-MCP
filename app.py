@@ -97,8 +97,8 @@ with st.sidebar:
     # ── API Key ──────────────────────────────────────────────────────────────
     api_key_input = st.text_input(
         "Anthropic API Key",
+        key="api_key_widget",      # explicit key lets us reset the widget on clear
         type="password",
-        value="",          # never pre-filled — user must type it each session
         placeholder="sk-ant-...",
         help=(
             "Your Anthropic API key. "
@@ -128,6 +128,7 @@ with st.sidebar:
             st.session_state.api_key = ""
             st.session_state.api_key_set = False
             st.session_state.agent = None
+            st.session_state.api_key_widget = ""   # resets the text input widget itself
             st.rerun()
 
     st.markdown("---")
