@@ -75,8 +75,12 @@ if "agent" not in st.session_state:
     st.session_state.agent = None
 
 if "api_key_set" not in st.session_state:
-    # Flag indicating whether the user has provided an API key
     st.session_state.api_key_set = False
+
+if "api_key" not in st.session_state:
+    # Never pre-filled from environment in the UI — each user must enter their own key.
+    # The env var is only read for local development convenience (not in production).
+    st.session_state.api_key = ""
 
 if "eval_results" not in st.session_state:
     # Results from the last evaluation run
@@ -94,18 +98,37 @@ with st.sidebar:
     api_key_input = st.text_input(
         "Anthropic API Key",
         type="password",
-        value=os.getenv("ANTHROPIC_API_KEY", ""),
-        help="Your Anthropic API key. Stored in memory only for this session.",
+        value="",          # never pre-filled — user must type it each session
+        placeholder="sk-ant-...",
+        help=(
+            "Your Anthropic API key. "
+            "Stored only in your browser session — never saved, never shared with other users. "
+            "Cleared automatically when you close the tab."
+        ),
     )
-    if api_key_input:
-        # Store in env so other modules can read it via os.getenv()
-        os.environ["ANTHROPIC_API_KEY"] = api_key_input
-        st.session_state.api_key_set = True
 
-    if st.session_state.api_key_set:
-        st.success("✅ API key configured")
-    else:
-        st.warning("⚠️ Enter your Anthropic API key")
+    if api_key_input:
+        if not api_key_input.startswith("sk-ant-"):
+            st.error("Invalid key format. Anthropic API keys start with 'sk-ant-'.")
+        elif api_key_input != st.session_state.api_key:
+            # Key changed — invalidate existing agent so it is rebuilt with new key
+            st.session_state.api_key = api_key_input
+            st.session_state.api_key_set = True
+            st.session_state.agent = None
+
+    col_status, col_clear = st.columns([3, 1])
+    with col_status:
+        if st.session_state.api_key_set:
+            masked = "sk-ant-..." + st.session_state.api_key[-4:]
+            st.success(f"✅ Key set ({masked})")
+        else:
+            st.warning("⚠️ Enter your Anthropic API key")
+    with col_clear:
+        if st.session_state.api_key_set and st.button("🗑️", help="Clear API key"):
+            st.session_state.api_key = ""
+            st.session_state.api_key_set = False
+            st.session_state.agent = None
+            st.rerun()
 
     st.markdown("---")
 
@@ -160,25 +183,22 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper — lazy-load the agent (instantiated once per session)
 # ─────────────────────────────────────────────────────────────────────────────
+def _sanitize_error(exc: Exception) -> str:
+    """Returns a safe error message with any API key substring redacted."""
+    msg = str(exc)
+    key = st.session_state.get("api_key", "")
+    if key and key in msg:
+        msg = msg.replace(key, "sk-ant-***REDACTED***")
+    return msg
+
+
 def get_agent():
-    """
-    Returns (or creates) the WeatherNewsAgent instance for this session.
-
-    The agent is created once and reused to avoid reinitialising the
-    Anthropic client on every interaction.
-
-    Returns:
-        WeatherNewsAgent: instance ready to receive queries.
-
-    Raises:
-        st.stop(): halts rendering if no API key is set.
-    """
+    """Returns (or creates) the WeatherNewsAgent instance for this session."""
     if st.session_state.agent is None:
-        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        api_key = st.session_state.api_key
         if not api_key:
             st.error("❌ API key not configured. Enter it in the sidebar.")
             st.stop()
-        # Deferred import to avoid errors if the package is not installed yet
         from agent.orchestrator import WeatherNewsAgent
         st.session_state.agent = WeatherNewsAgent(api_key=api_key)
     return st.session_state.agent
@@ -222,7 +242,7 @@ with tab_chat:
                 try:
                     answer = agent.query(last_user_msg)
                 except Exception as exc:
-                    answer = f"❌ Error: {exc}"
+                    answer = f"❌ Error: {_sanitize_error(exc)}"
             st.markdown(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
 
@@ -309,7 +329,7 @@ with tab_eval:
 
         agent = get_agent()
         evaluator = AgentEvaluator(
-            api_key=os.getenv("ANTHROPIC_API_KEY", ""),
+            api_key=st.session_state.api_key,
             agent=agent,
         )
 
