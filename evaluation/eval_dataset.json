@@ -1,0 +1,82 @@
+[
+  {
+    "id": "w1",
+    "category": "weather",
+    "question": "What is the current weather in Bogota?",
+    "expected_keywords": ["temperature", "°C", "wind", "Bogota"],
+    "expected_tools": ["resolve_city", "get_current_weather"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "w2",
+    "category": "weather",
+    "question": "What is the current weather in London?",
+    "expected_keywords": ["temperature", "°C", "London", "wind"],
+    "expected_tools": ["resolve_city", "get_current_weather"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "n1",
+    "category": "news_rss",
+    "question": "What are the latest technology news headlines?",
+    "expected_keywords": ["tech", "technology"],
+    "expected_tools": ["get_news_by_category"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "n2",
+    "category": "news_rss",
+    "question": "What is the latest AI news today?",
+    "expected_keywords": ["AI", "news", "today"],
+    "expected_tools": ["get_news_by_category", "search_rss_feeds"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "n3",
+    "category": "news_hackernews",
+    "question": "What are the top stories on Hacker News right now?",
+    "expected_keywords": ["Hacker News", "story", "points"],
+    "expected_tools": ["get_hackernews_top"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "n4",
+    "category": "news_hackernews",
+    "question": "Are there any trending stories about Python or open source on Hacker News?",
+    "expected_keywords": ["Hacker News", "Python", "open source"],
+    "expected_tools": ["get_hackernews_trending"],
+    "min_relevance_score": 6
+  },
+  {
+    "id": "n5",
+    "category": "news_gdelt",
+    "question": "What is the global news coverage about climate change today?",
+    "expected_keywords": ["climate", "global", "news"],
+    "expected_tools": ["search_global_news"],
+    "min_relevance_score": 6
+  },
+  {
+    "id": "n6",
+    "category": "news_gdelt",
+    "question": "What news is coming from Colombia today?",
+    "expected_keywords": ["Colombia", "news"],
+    "expected_tools": ["get_news_by_country"],
+    "min_relevance_score": 6
+  },
+  {
+    "id": "m1",
+    "category": "mixed",
+    "question": "What is the weather in Paris and what are the latest business news?",
+    "expected_keywords": ["Paris", "temperature", "business", "news"],
+    "expected_tools": ["resolve_city", "get_current_weather", "get_news_by_category"],
+    "min_relevance_score": 7
+  },
+  {
+    "id": "e1",
+    "category": "edge",
+    "question": "What is the weather on Mars?",
+    "expected_keywords": ["Earth", "weather", "only"],
+    "expected_tools": [],
+    "min_relevance_score": 4
+  }
+]
