@@ -79,8 +79,11 @@ if "api_key_set" not in st.session_state:
 
 if "api_key" not in st.session_state:
     # Never pre-filled from environment in the UI — each user must enter their own key.
-    # The env var is only read for local development convenience (not in production).
     st.session_state.api_key = ""
+
+if "api_key_version" not in st.session_state:
+    # Incrementing this forces the text_input to reinitialise (clears the displayed value).
+    st.session_state.api_key_version = 0
 
 if "eval_results" not in st.session_state:
     # Results from the last evaluation run
@@ -97,7 +100,9 @@ with st.sidebar:
     # ── API Key ──────────────────────────────────────────────────────────────
     api_key_input = st.text_input(
         "Anthropic API Key",
-        key="api_key_widget",      # explicit key lets us reset the widget on clear
+        # Changing the key forces Streamlit to treat this as a brand-new widget
+        # (empty by default), which is how we clear it without touching widget state.
+        key=f"api_key_widget_{st.session_state.api_key_version}",
         type="password",
         placeholder="sk-ant-...",
         help=(
@@ -128,7 +133,10 @@ with st.sidebar:
             st.session_state.api_key = ""
             st.session_state.api_key_set = False
             st.session_state.agent = None
-            st.session_state.api_key_widget = ""   # resets the text input widget itself
+            st.session_state.messages = []
+            st.session_state.eval_results = None
+            # Increment version → new widget key → input field renders empty
+            st.session_state.api_key_version += 1
             st.rerun()
 
     st.markdown("---")
